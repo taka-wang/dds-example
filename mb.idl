@@ -1,0 +1,19 @@
+// DDS IDL
+
+module Modbus
+{
+	// DO
+	struct led {
+    	short id;	// register addr
+    	boolean on;	// DO
+	};
+#pragma keylist led id
+
+	// AI
+  	struct voltage {
+    	short id;	// register addr   
+    	float val;	// AI	
+	};
+#pragma keylist voltage id
+
+};
