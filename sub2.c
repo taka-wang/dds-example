@@ -9,17 +9,17 @@
 #include <unistd.h>
 #include <signal.h>
 */
-#include "mb.h" // generated code
+#include "mb.h"                             // generated code
 
-#define MY_TOPIC "Voltage"
-#define MAX_SAMPLES 10
+#define MY_TOPIC    "Voltage"               // DDS topic name
+#define MAX_SAMPLES 10                      // max num of sample for each take
 
-static dds_condition_t terminated_cond;  // terminated condition variable
+static dds_condition_t terminated_cond;     // terminated condition variable
 
 // handle ctrl+c signal
 static void ctrl_handler (int fdw_ctrl_type)
 {
-    dds_guard_trigger (terminated_cond); // set trigger_value
+    dds_guard_trigger (terminated_cond);    // set trigger_value
 }
 
 int main (int argc, char *argv[])
@@ -43,7 +43,7 @@ int main (int argc, char *argv[])
     size_t              ws_result_size  = 1u;
     dds_time_t          ws_timeout      = DDS_SECS (10);
 
-    dds_condition_t     read_cond; // condition variable
+    dds_condition_t     read_cond;      // condition variable
 
     void*               samples_ptr[MAX_SAMPLES];
     Modbus_voltage      samples[MAX_SAMPLES];
@@ -62,49 +62,49 @@ int main (int argc, char *argv[])
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
     // Create domain participant
-    status = dds_participant_create (                       // factory method to create domain participant
-                                     &domain_participant,   // pointer to created domain participant entity
-                                     DDS_DOMAIN_DEFAULT,    // domain id (DDS_DOMAIN_DEFAULT = -1)
-                                     qos,                   // Qos on created domain participant (can be NULL)
-                                     NULL                   // Listener on created domain participant (can be NULL)
-                                    );
+    status = dds_participant_create (   // factory method to create domain participant
+                &domain_participant,    // pointer to created domain participant entity
+                DDS_DOMAIN_DEFAULT,     // domain id (DDS_DOMAIN_DEFAULT = -1)
+                qos,                    // Qos on created domain participant (can be NULL)
+                NULL                    // Listener on created domain participant (can be NULL)
+            );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
     // Create reader topic
-    status = dds_topic_create (                             // factory method to create topic
-                                domain_participant,         // domain participant entity
-                                &voltage_topic,             // pointer to created topic entity
-                                &Modbus_voltage_desc,       // pointer to IDL generated topic descriptor
-                                MY_TOPIC,                   // name of created topic
-                                NULL,                       // Qos on created topic (can be NULL)
-                                NULL                        // Listener on created topic (can be NULL)
-                              );
+    status = dds_topic_create (         // factory method to create topic
+                domain_participant,     // domain participant entity
+                &voltage_topic,         // pointer to created topic entity
+                &Modbus_voltage_desc,   // pointer to IDL generated topic descriptor
+                MY_TOPIC,               // name of created topic
+                NULL,                   // Qos on created topic (can be NULL)
+                NULL                    // Listener on created topic (can be NULL)
+            );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
     // Create a subscriber
-    status = dds_subscriber_create (                        // factory method to create subscriber
-                                    domain_participant,     // domain participant entity
-                                    &subscriber,            // pointer to created subscriber entity
-                                    qos,                    // Qos on created subscriber (can be NULL)
-                                    NULL                    // Listener on created subscriber (can be NULL)
-                                   );
+    status = dds_subscriber_create (    // factory method to create subscriber
+                domain_participant,     // domain participant entity
+                &subscriber,            // pointer to created subscriber entity
+                qos,                    // Qos on created subscriber (can be NULL)
+                NULL                    // Listener on created subscriber (can be NULL)
+            );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
     // Create reader with qos
     qos = dds_qos_create ();
-    dds_qset_reliability (                              // Set the reliability policy in the qos structure
-                            qos,                        // The pointer to the qos structure
-                            DDS_RELIABILITY_RELIABLE,   // kind: {RELIABLE, BEST_EFFORT}
-                            DDS_SECS (10)               // max_blocking_time, default: 100ms
-                         );
+    dds_qset_reliability (              // Set the reliability policy in the qos structure
+        qos,                            // The pointer to the qos structure
+        DDS_RELIABILITY_RELIABLE,       // kind: {RELIABLE, BEST_EFFORT}
+        DDS_SECS (10)                   // max_blocking_time, default: 100ms
+    );
     //dds_qset_history (qos, DDS_HISTORY_KEEP_ALL, 0);
-    status = dds_reader_create (                        // factory method to create typed reader
-                                 subscriber,            // domain participant entity or subscriber entity
-                                 &voltage_reader,       // pointer to created reader entity
-                                 voltage_topic,         // topic entity
-                                 qos,                   // Qos on created reader (can be NULL)
-                                 NULL                   // Listener on created reader (can be NULL)
-                               );
+    status = dds_reader_create (        // factory method to create typed reader
+                subscriber,             // domain participant entity or subscriber entity
+                &voltage_reader,        // pointer to created reader entity
+                voltage_topic,          // topic entity
+                qos,                    // Qos on created reader (can be NULL)
+                NULL                    // Listener on created reader (can be NULL)
+            );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
     dds_qos_delete (qos);
 
@@ -112,29 +112,29 @@ int main (int argc, char *argv[])
     terminated_cond = dds_guardcondition_create ();
     //or read_cond = dds_statuscondition_get (reader); 
     read_cond = dds_readcondition_create ( 
-                                            voltage_reader, // Reader entity on which the condition is created
-                                            DDS_ANY_STATE   // mask set the sample_state, instance_state and view_state of the sample
-                                         ); 
+                    voltage_reader,     // Reader entity on which the condition is created
+                    DDS_ANY_STATE       // mask set the sample_state, instance_state and view_state of the sample
+                ); 
 
     // Attach condition variable to waitset
     ws = dds_waitset_create ();
     dds_status_set_enabled ( 
-                                voltage_reader,             // Entity to enable the status
-                                DDS_DATA_AVAILABLE_STATUS   // mask Status value that indicates the status to be enabled
-                           );
+        voltage_reader,                 // Entity to enable the status
+        DDS_DATA_AVAILABLE_STATUS       // mask Status value that indicates the status to be enabled
+    );
     // attach cond
     status = dds_waitset_attach (
-                                ws, 
-                                read_cond, 
-                                voltage_reader
-                                );
+                ws,                     // pointer to a waitset
+                read_cond,              // pointer to a condition to wait for the trigger value
+                voltage_reader          // attach condition, could be used to know the reason for the waitset to unblock (can be NULL)
+            );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
     // attach terminated
     status = dds_waitset_attach (
-                                ws,                 // pointer to a waitset
-                                terminated_cond,    // pointer to a condition to wait for the trigger value
-                                terminated_cond     // attach condition, could be used to know the reason for the waitset to unblock (can be NULL)
-                                );
+                ws,                     // pointer to a waitset
+                terminated_cond,        // pointer to a condition to wait for the trigger value
+                terminated_cond         // attach condition, could be used to know the reason for the waitset to unblock (can be NULL)
+            );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
 
@@ -142,22 +142,22 @@ int main (int argc, char *argv[])
 
     printf ("Waiting for writer...\n");
     status = dds_waitset_wait (
-                                ws, 
-                                ws_results, 
-                                ws_result_size, 
-                                DDS_INFINITY
-                              ); // inf block
+                ws, 
+                ws_results, 
+                ws_result_size, 
+                DDS_INFINITY            // inf block
+            ); 
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
     while (!dds_condition_triggered (terminated_cond) )
     {
         // blocking
         status = dds_waitset_wait ( 
-                                    ws,             // pointer to a waitset
-                                    ws_results,     // pointer to an array of attached_conditions based on the conditions associated with a waitset (can be NULL)
-                                    ws_result_size, // number of attached conditions (can be zero)
-                                    ws_timeout      // timeout value associated with a waitset (can be INFINITY or some value)
-                                  );
+                    ws,                 // pointer to a waitset
+                    ws_results,         // pointer to an array of attached_conditions based on the conditions associated with a waitset (can be NULL)
+                    ws_result_size,     // number of attached conditions (can be zero)
+                    ws_timeout          // timeout value associated with a waitset (can be INFINITY or some value)
+                );
         DDS_ERR_CHECK (status, DDS_CHECK_REPORT);
 
         // timeout checking
@@ -172,12 +172,12 @@ int main (int argc, char *argv[])
         {
             // take sample from dds context
             int sample_count = dds_take (
-                                            voltage_reader, // reader entity 
-                                            samples_ptr,    // (void **) array of pointers to samples (pointers can be NULL)
-                                            MAX_SAMPLES,    // max num of samples to read
-                                            samples_info,   // pointer to an array of dds_sample_info_t
-                                            sample_mask     // filter mask, [sample, view, instance state]
-                                        );
+                                voltage_reader, // reader entity 
+                                samples_ptr,    // (void **) array of pointers to samples (pointers can be NULL)
+                                MAX_SAMPLES,    // max num of samples to read
+                                samples_info,   // pointer to an array of dds_sample_info_t
+                                sample_mask     // filter mask, [sample, view, instance state]
+                              );
             DDS_ERR_CHECK (sample_count, DDS_CHECK_REPORT);
 
             // give chance to catch terminate signal
@@ -199,10 +199,10 @@ int main (int argc, char *argv[])
     //DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
     //dds_condition_delete (read_cond);
 
-    status = dds_waitset_detach (                       // Disassociate the condition attached with a waitset
-                                    ws,                 // pointer to a waitset
-                                    terminated_cond     // pointer to a condition to wait for the trigger value
-                                );
+    status = dds_waitset_detach (   // Disassociate the condition attached with a waitset
+                ws,                 // pointer to a waitset
+                terminated_cond     // pointer to a condition to wait for the trigger value
+            );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
     dds_condition_delete (terminated_cond);
     

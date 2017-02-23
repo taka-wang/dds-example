@@ -33,6 +33,8 @@ Entities is an abstract base class in DCPS, you can learn more from this [slides
 - sub1.c : subscriber with listener (async)
 - sub2.c : subscriber with waitset (blocking)
 - sub3.c : subscriber with waitset (blocking) and [thread pool](https://github.com/mbrossard/threadpool)
+- sub4.c : subscriber with waitset (blocking) and [lock-free thread pool](https://github.com/xhjcehust/LFTPool)
+
 
 ## // Build
 

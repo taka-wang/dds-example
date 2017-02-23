@@ -1,5 +1,5 @@
 //
-// subscriber with waitset, condition variable (blocking) and thread pool
+// subscriber with waitset and condition variable (blocking)
 //
 
 /*
@@ -10,20 +10,18 @@
 #include <signal.h>
 */
 
-#include "threadpool.h"
-#include <pthread.h>
 #include <unistd.h>
-#include <assert.h>
-#include "mb.h"                     // generated code
+#include <sys/time.h>
+#include "tpool.h"
+#include "mb.h"                         // generated code
 
-#define MY_TOPIC        "Voltage"   // DDS topic name
-#define MAX_SAMPLES     200         // max num of sample for each take
-#define THREAD          32          // num of the threads in thread pool
-#define QUEUE           128         // num of the task queue
+#define MY_TOPIC        "Voltage"       // DDS topic name
+#define MAX_SAMPLES     200             // max num of sample for each take
+#define THREAD          32              // num of the threads in thread pool
 
-void thread_task(void *arg);        // thread handler
+void thread_task(void *arg);            // thread handler
 
-// compond sample with sample pointer and sample info arrays
+// compond sample
 typedef struct sample_s 
 {
     void*              samples_ptr[MAX_SAMPLES];
@@ -53,9 +51,9 @@ void thread_task(void *arg)
         if (compound_samples_ptr->samples_info[i].valid_data) // valid sample from sample_info
         {
             sample_ptr = compound_samples_ptr->samples_ptr[i]; // alternative: cast void* to Modbus_voltage*
-            printf("read(%d): %d, %f\n", compound_samples_ptr->counter,
-                                         sample_ptr->id, 
-                                         sample_ptr->val);
+            printf("read(%d): %d, %f\n",    compound_samples_ptr->counter, 
+                                            sample_ptr->id, 
+                                            sample_ptr->val);
         }
     }
     dds_sleepfor (DDS_MSECS(1000)); // simulate busy task, can be remove
@@ -74,12 +72,10 @@ int main (int argc, char *argv[])
     sigaction (SIGINT, &sat, &oldAction);
 
     // Init thread pool
-    threadpool_t* pool = threadpool_create(THREAD, QUEUE, 0);
-    fprintf(stderr, "Pool started with %d threads and queue size of %d\n", THREAD, QUEUE);
-    
+    void *tpool = tpool_init(THREAD);
+
     // Declare dds entities ------------------------
     int counter                         = 0;
-
     dds_condition_t read_cond;          // condition variable
     dds_qos_t*      qos                 = NULL;
     dds_entity_t    domain_participant  = NULL;
@@ -161,9 +157,9 @@ int main (int argc, char *argv[])
     );
     // attach cond
     status = dds_waitset_attach (
-                ws,                     // pointer to a waitset
-                read_cond,              // pointer to a condition to wait for the trigger value 
-                voltage_reader          // attach condition, could be used to know the reason for the waitset to unblock (can be NULL)
+                ws, 
+                read_cond, 
+                voltage_reader
             );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
     // attach terminated
@@ -179,11 +175,11 @@ int main (int argc, char *argv[])
 
     printf ("Waiting for writer...\n");
     status = dds_waitset_wait (
-                ws,                     // pointer to a waitset
-                ws_results,             // pointer to an array of attached_conditions based on the conditions associated with a waitset (can be NULL)
-                ws_result_size,         // number of attached conditions (can be zero)
-                DDS_INFINITY            // timeout value associated with a waitset (can be INFINITY or some value)
-            ); // inf block
+                ws, 
+                ws_results, 
+                ws_result_size, 
+                DDS_INFINITY            // inf block
+            ); 
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
     while (!dds_condition_triggered (terminated_cond) )
@@ -209,36 +205,31 @@ int main (int argc, char *argv[])
         {
             counter++;
             
-            compound_sample_t* compound_samples_ptr = (compound_sample_t*) calloc (1, sizeof(compound_sample_t));
+            compound_sample_t* compound_samples_ptr = (compound_sample_t*) calloc(1, sizeof(compound_sample_t));
             compound_samples_ptr->counter = counter;
 
             // take sample from dds context
             compound_samples_ptr->sample_count = dds_take (
-                voltage_reader,                         // reader entity 
-                compound_samples_ptr->samples_ptr,      // (void **) array of pointers to samples (pointers can be NULL)
-                MAX_SAMPLES,                            // max num of samples to read
-                compound_samples_ptr->samples_info,     // pointer to an array of dds_sample_info_t
-                sample_mask                             // filter mask, [sample, view, instance state]
-            );
+                    voltage_reader,                         // reader entity 
+                    compound_samples_ptr->samples_ptr,      // (void **) array of pointers to samples (pointers can be NULL)
+                    MAX_SAMPLES,                            // max num of samples to read
+                    compound_samples_ptr->samples_info,     // pointer to an array of dds_sample_info_t
+                    sample_mask                             // filter mask, [sample, view, instance state]
+                );
             // add to task queue
-            threadpool_add (
-                pool, 
-                &thread_task, 
-                compound_samples_ptr, 
-                0
-            );
+            tpool_add_work(tpool, thread_task, compound_samples_ptr);
         }
     }
 
     sigaction (SIGINT, &oldAction, 0);
+
     printf ("Cleaning up...\n");
 
     //status = dds_waitset_detach (ws, read_cond);
     //DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
     //dds_condition_delete (read_cond);
 
-    threadpool_destroy (pool, threadpool_graceful);
-    dds_sleepfor (DDS_SECS(1));
+    tpool_destroy(tpool, 1);            // gracefully terminate
 
     status = dds_waitset_detach (       // Disassociate the condition attached with a waitset
                 ws,                     // pointer to a waitset
