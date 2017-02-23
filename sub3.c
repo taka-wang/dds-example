@@ -57,9 +57,10 @@ void thread_task(void *arg)
             printf("read(%d): %d, %f\n", compound_samples_ptr->counter, sample_ptr->id, sample_ptr->val);
         }
     }
-    dds_sleepfor (DDS_MSECS(1000));
+    dds_sleepfor (DDS_MSECS(1000)); // simulate busy task, can be remove
 
     free(compound_samples_ptr);
+    assert(arg == NULL);
 }
 
 int main (int argc, char *argv[])

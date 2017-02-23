@@ -96,7 +96,6 @@ int main (int argc, char *argv[])
         DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
         printf ("write: %f\n", writer_msg.val);
-        //dds_sleepfor (DDS_SECS(1));
         dds_sleepfor (DDS_MSECS(100));
     }
 
