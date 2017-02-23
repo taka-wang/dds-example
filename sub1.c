@@ -18,7 +18,7 @@
 static volatile int do_loop = 1;
 
 // signal handler
-static void int_handler (int dummy) 
+static void sigint_handler (int sig) 
 {
     do_loop = 0;
 }
@@ -50,17 +50,20 @@ static void data_available_handler (dds_entity_t voltage_reader)
 
 int main (int argc, char *argv[])
 {
-    // Handle system signal
-    signal (SIGINT,  int_handler);
-    signal (SIGTERM, int_handler);
+    // Change signal disposition
+    struct sigaction sat;
+    sat.sa_handler = sigint_handler;
+    sigemptyset (&sat.sa_mask);
+    sat.sa_flags = 0;
+    sigaction (SIGINT, &sat, NULL);
 
     // Declare dds entities ------------------------
     int status;
-    dds_qos_t*   qos                = NULL;
-    dds_entity_t domain_participant = NULL;
-    dds_entity_t voltage_topic      = NULL;
-    dds_entity_t subscriber         = NULL;
-    dds_entity_t voltage_reader     = NULL;
+    dds_qos_t*   qos                    = NULL;
+    dds_entity_t domain_participant     = NULL;
+    dds_entity_t voltage_topic          = NULL;
+    dds_entity_t voltage_subscriber     = NULL;
+    dds_entity_t voltage_reader         = NULL;
     dds_readerlistener_t listener;
     memset (&listener, 0, sizeof(listener));
     
@@ -91,7 +94,7 @@ int main (int argc, char *argv[])
     // Create a subscriber
     status = dds_subscriber_create (    // factory method to create subscriber
                 domain_participant,     // domain participant entity
-                &subscriber,            // pointer to created subscriber entity
+                &voltage_subscriber,    // pointer to created subscriber entity
                 qos,                    // Qos on created subscriber (can be NULL)
                 NULL                    // Listener on created subscriber (can be NULL)
             );
@@ -115,7 +118,7 @@ int main (int argc, char *argv[])
     );
 
     status = dds_reader_create (        // factory method to create typed reader
-        subscriber,                     // domain participant entity or subscriber entity
+        voltage_subscriber,             // domain participant entity or subscriber entity
         &voltage_reader,                // pointer to created reader entity
         voltage_topic,                  // topic entity
         qos,                            // Qos on created reader (can be NULL)

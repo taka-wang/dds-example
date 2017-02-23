@@ -21,7 +21,7 @@
 
 void thread_task(void *arg);            // thread handler
 
-// compond sample
+// compound sample with sample pointer and sample info arrays
 typedef struct sample_s 
 {
     void*              samples_ptr[MAX_SAMPLES];
@@ -33,7 +33,7 @@ typedef struct sample_s
 static dds_condition_t terminated_cond;  // terminated condition variable
 
 // handle ctrl+c signal
-static void ctrl_handler (int fdw_ctrl_type)
+static void sigint_handler (int fdw_ctrl_type)
 {
     dds_guard_trigger (terminated_cond); // set trigger_value
 }
@@ -64,24 +64,25 @@ void thread_task(void *arg)
 
 int main (int argc, char *argv[])
 {
-    // Register handler for Ctrl-C
-    struct sigaction sat, oldAction;
-    sat.sa_handler = ctrl_handler;
+    // Change signal disposition
+    struct sigaction sat;
+    sat.sa_handler = sigint_handler;
     sigemptyset (&sat.sa_mask);
     sat.sa_flags = 0;
-    sigaction (SIGINT, &sat, &oldAction);
+    sigaction (SIGINT, &sat, NULL);
 
     // Init thread pool
     void *tpool = tpool_init(THREAD);
 
     // Declare dds entities ------------------------
     int counter                         = 0;
-    dds_condition_t read_cond;          // condition variable
+
     dds_qos_t*      qos                 = NULL;
     dds_entity_t    domain_participant  = NULL;
     dds_entity_t    voltage_topic       = NULL;
-    dds_entity_t    subscriber          = NULL;
+    dds_entity_t    voltage_subscriber  = NULL;
     dds_entity_t    voltage_reader      = NULL;
+    dds_condition_t voltage_cond;       // condition variable
 
     dds_waitset_t   ws;
     dds_attach_t    ws_results[1];
@@ -117,7 +118,7 @@ int main (int argc, char *argv[])
     // Create a subscriber
     status = dds_subscriber_create (    // factory method to create subscriber
                 domain_participant,     // domain participant entity
-                &subscriber,            // pointer to created subscriber entity
+                &voltage_subscriber,    // pointer to created subscriber entity
                 qos,                    // Qos on created subscriber (can be NULL)
                 NULL                    // Listener on created subscriber (can be NULL)
             );
@@ -132,7 +133,7 @@ int main (int argc, char *argv[])
     );
     //dds_qset_history (qos, DDS_HISTORY_KEEP_ALL, 0);
     status = dds_reader_create (        // factory method to create typed reader
-                subscriber,             // domain participant entity or subscriber entity
+                voltage_subscriber,     // domain participant entity or subscriber entity
                 &voltage_reader,        // pointer to created reader entity
                 voltage_topic,          // topic entity
                 qos,                    // Qos on created reader (can be NULL)
@@ -143,11 +144,11 @@ int main (int argc, char *argv[])
 
     // Init condition variables
     terminated_cond = dds_guardcondition_create ();
-    //or read_cond = dds_statuscondition_get (reader); 
-    read_cond = dds_readcondition_create ( 
+    //or voltage_cond = dds_statuscondition_get (reader); 
+    voltage_cond = dds_readcondition_create ( 
                     voltage_reader,     // Reader entity on which the condition is created
                     DDS_ANY_STATE       // mask set the sample_state, instance_state and view_state of the sample
-                ); 
+                   ); 
 
     // Attach condition variable to waitset
     ws = dds_waitset_create ();
@@ -158,7 +159,7 @@ int main (int argc, char *argv[])
     // attach cond
     status = dds_waitset_attach (
                 ws, 
-                read_cond, 
+                voltage_cond, 
                 voltage_reader
             );
     DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
@@ -221,13 +222,11 @@ int main (int argc, char *argv[])
         }
     }
 
-    sigaction (SIGINT, &oldAction, 0);
-
     printf ("Cleaning up...\n");
 
-    //status = dds_waitset_detach (ws, read_cond);
+    //status = dds_waitset_detach (ws, voltage_cond);
     //DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
-    //dds_condition_delete (read_cond);
+    //dds_condition_delete (voltage_cond);
 
     tpool_destroy(tpool, 1);            // gracefully terminate
 
