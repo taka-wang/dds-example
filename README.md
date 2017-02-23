@@ -31,6 +31,7 @@ Entities is an abstract base class in DCPS, you can learn more from this [slides
 - pub: publish sample every 100 ms
 - sub1: subscriber with listener (async)
 - sub2: subscriber with waitset (blocking)
+- sub3: subscriber with waitset (blocking) and [thread pool](https://github.com/mbrossard/threadpool)
 
 ## // Build
 
