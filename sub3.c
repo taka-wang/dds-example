@@ -16,12 +16,16 @@
 #include <assert.h>
 #include "mb.h"                     // generated code
 
-#define MY_TOPIC        "Voltage"   // DDS topic name
-#define MAX_SAMPLES     200         // max num of sample for each take
-#define THREAD          32          // num of the threads in thread pool
-#define QUEUE           128         // num of the task queue
+#define AND &&
+#define MY_TOPIC    "Voltage"       // DDS topic name
+#define MAX_SAMPLES 200             // max num of sample for each take
+// global variables
 
-void thread_task(void *arg);        // thread handler
+const uint16_t THREAD      = 32;           // num of the threads in thread pool
+const uint16_t QUEUE       = 128;          // num of the task queue
+static dds_condition_t terminated_cond;    // terminated condition variable
+
+extern void thread_task(void *arg);        // thread handler
 
 // compound sample with sample pointer and sample info arrays
 typedef struct compound_sample_s 
@@ -31,8 +35,6 @@ typedef struct compound_sample_s
     int sample_count;
     int counter;
 } compound_sample_t;
-
-static dds_condition_t terminated_cond;  // terminated condition variable
 
 // handle ctrl+c signal
 static void sigint_handler (int fdw_ctrl_type)
@@ -48,7 +50,7 @@ void thread_task(void *arg)
     
     Modbus_voltage* sample_ptr = NULL;
     // give chance to catch terminate signal
-    for (int i = 0; !dds_condition_triggered (terminated_cond) && i < compound_samples_ptr->sample_count; i++)
+    for (int i = 0; !dds_condition_triggered (terminated_cond) AND i < compound_samples_ptr->sample_count; i++)
     {
         if (compound_samples_ptr->samples_info[i].valid_data) // valid sample from sample_info
         {
@@ -232,12 +234,15 @@ int main (int argc, char *argv[])
 
     printf ("Cleaning up...\n");
 
-    status = dds_waitset_detach (ws, voltage_cond);
-    DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
-    dds_condition_delete (voltage_cond);
-
     threadpool_destroy (pool, threadpool_graceful);
     dds_sleepfor (DDS_SECS(1));
+
+    status = dds_waitset_detach (
+                ws, 
+                voltage_cond
+            );
+    DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
+    dds_condition_delete (voltage_cond);
 
     status = dds_waitset_detach (       // Disassociate the condition attached with a waitset
                 ws,                     // pointer to a waitset

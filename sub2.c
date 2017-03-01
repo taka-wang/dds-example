@@ -12,8 +12,10 @@
 #include "mb.h"                             // generated code
 
 #define MY_TOPIC    "Voltage"               // DDS topic name
-#define MAX_SAMPLES 10                      // max num of sample for each take
+#define AND &&
 
+// global variables
+const uint16_t MAX_SAMPLES = 10;            // max num of sample for each take
 static dds_condition_t terminated_cond;     // terminated condition variable
 
 // handle ctrl+c signal
@@ -180,7 +182,7 @@ int main (int argc, char *argv[])
             DDS_ERR_CHECK (sample_count, DDS_CHECK_REPORT);
 
             // give chance to catch terminate signal
-            for (int i = 0; !dds_condition_triggered (terminated_cond) && i < sample_count; i++)
+            for (int i = 0; !dds_condition_triggered (terminated_cond) AND i < sample_count; i++)
             {
                 if (samples_info[i].valid_data) // valid sample from sample_info
                 {

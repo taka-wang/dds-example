@@ -9,12 +9,12 @@
 #include <unistd.h>
 #include <signal.h>
 */
-#include "mb.h"                     // generated code
+#include "mb.h"                         // generated code
 
-#define MY_TOPIC        "Voltage"   // DDS topic name
-#define MAX_SAMPLES     1           // max num of sample for each take
+#define MY_TOPIC "Voltage"              // DDS topic name
 
 // global variables
+const uint16_t MAX_SAMPLES  = 1;        // max num of sample for each take
 static volatile int do_loop = 1;
 
 // signal handler
