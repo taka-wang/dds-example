@@ -4,10 +4,12 @@ project(dds_sample C)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 
 SET(PUB_NAME pub)
+SET(PUB2_NAME pub2)
 SET(SUB1_NAME sub1)
 SET(SUB2_NAME sub2)
 SET(SUB3_NAME sub3)
 SET(SUB4_NAME sub4)
+
 
 
 # libdds location
@@ -18,10 +20,12 @@ SET(DDS_HEADER_INCLUDE_DIR /opt/PrismTech/Vortex_v2/Device/VortexLite/2.0.4/incl
 
 # source codes
 SET(PUB_SOURCES  pub.c )
+SET(PUB2_SOURCES pub2.c)
 SET(SUB1_SOURCES sub1.c)
 SET(SUB2_SOURCES sub2.c)
 SET(SUB3_SOURCES sub3.c)
 SET(SUB4_SOURCES sub4.c)
+
 
 # cflag
 SET(EXT_C_FLAGS "-m64 -pipe -Wall -fno-strict-aliasing -O3 -std=c99 -Wstrict-prototypes -Wmissing-prototypes -Dos_linux_gcc_x86 -DLITE=1 -DNDEBUG -D_GNU_SOURCE")
@@ -41,6 +45,11 @@ include_directories (${dds_sample_SOURCE_DIR}/lftpool)
 ADD_EXECUTABLE(${PUB_NAME} ${PUB_SOURCES})
 TARGET_LINK_LIBRARIES(${PUB_NAME} LINK_PUBLIC ${DDS_LIB_DIR} rt pthread gen)
 
+# pub2
+ADD_EXECUTABLE(${PUB2_NAME} ${PUB2_SOURCES})
+TARGET_LINK_LIBRARIES(${PUB2_NAME} LINK_PUBLIC ${DDS_LIB_DIR} rt pthread gen)
+
+
 # sub1
 ADD_EXECUTABLE(${SUB1_NAME} ${SUB1_SOURCES})
 TARGET_LINK_LIBRARIES(${SUB1_NAME} LINK_PUBLIC ${DDS_LIB_DIR} rt pthread gen)
@@ -56,3 +65,4 @@ TARGET_LINK_LIBRARIES(${SUB3_NAME} LINK_PUBLIC ${DDS_LIB_DIR} rt pthread gen poo
 # sub4
 ADD_EXECUTABLE(${SUB4_NAME} ${SUB4_SOURCES})
 TARGET_LINK_LIBRARIES(${SUB4_NAME} LINK_PUBLIC ${DDS_LIB_DIR} rt pthread gen lftpool)
+

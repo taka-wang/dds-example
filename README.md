@@ -2,7 +2,7 @@
 
 Vortex Lite pub-sub examples
 
-## // What is a dds entities
+## // What are dds entities
 
 Entities is an abstract base class in DCPS, you can learn more from this [slides](http://www.slideshare.net/cmwang/entities-in-dcps-dds).
 
@@ -29,12 +29,12 @@ Entities is an abstract base class in DCPS, you can learn more from this [slides
 ## // File Descriptions
 
 - mb.idl : sample IDL for DDS topics
-- pub.c  : publish sample every 100 ms
-- sub1.c : subscriber with listener (async)
-- sub2.c : subscriber with waitset (blocking)
-- sub3.c : subscriber with waitset (blocking) and [thread pool](https://github.com/mbrossard/threadpool)
-- sub4.c : subscriber with waitset (blocking) and [lock-free thread pool](https://github.com/xhjcehust/LFTPool)
-
+- pub.c  : publish voltage sample every 100 ms
+- pub2.c : publish led sample every 100 ms
+- sub1.c : subscriber voltage with listener (async)
+- sub2.c : subscriber voltage with waitset (blocking)
+- sub3.c : subscriber voltage with waitset (blocking) and [thread pool](https://github.com/mbrossard/threadpool)
+- sub4.c : subscriber voltage with waitset (blocking) and [lock-free thread pool](https://github.com/xhjcehust/LFTPool)
 
 ## // Build
 

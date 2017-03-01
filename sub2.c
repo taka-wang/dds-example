@@ -192,9 +192,9 @@ int main (int argc, char *argv[])
 
     printf ("Cleaning up...\n");
 
-    //status = dds_waitset_detach (ws, voltage_cond);
-    //DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
-    //dds_condition_delete (voltage_cond);
+    status = dds_waitset_detach (ws, voltage_cond);
+    DDS_ERR_CHECK (status, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
+    dds_condition_delete (voltage_cond);
 
     status = dds_waitset_detach (   // Disassociate the condition attached with a waitset
                 ws,                 // pointer to a waitset
