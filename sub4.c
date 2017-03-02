@@ -17,10 +17,14 @@
 
 #define AND &&
 #define MY_TOPIC "Voltage"              // DDS topic name
-#define MAX_SAMPLES 200                 // max num of sample for each take
+
+enum 
+{ 
+    MAX_SAMPLES = 200,                  // max num of sample for each take
+    THREAD      = 32                    // num of the threads in thread pool
+}; 
 
 // global variables
-const uint16_t THREAD      = 32;        // num of the threads in thread pool
 static dds_condition_t terminated_cond; // terminated condition variable
 
 extern void thread_task(void *arg);     // thread handler

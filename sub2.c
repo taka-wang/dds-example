@@ -14,8 +14,9 @@
 #define MY_TOPIC    "Voltage"               // DDS topic name
 #define AND &&
 
+enum { MAX_SAMPLES = 10 };                  // max num of sample for each take
+
 // global variables
-const uint16_t MAX_SAMPLES = 10;            // max num of sample for each take
 static dds_condition_t terminated_cond;     // terminated condition variable
 
 // handle ctrl+c signal

@@ -9,8 +9,7 @@ SET(SUB1_NAME sub1)
 SET(SUB2_NAME sub2)
 SET(SUB3_NAME sub3)
 SET(SUB4_NAME sub4)
-
-
+SET(SUB5_NAME sub5)
 
 # libdds location
 SET(DDS_LIB_DIR /opt/PrismTech/Vortex_v2/Device/VortexLite/2.0.4/lib/linux_gcc_x86/libdds.so)
@@ -25,7 +24,7 @@ SET(SUB1_SOURCES sub1.c)
 SET(SUB2_SOURCES sub2.c)
 SET(SUB3_SOURCES sub3.c)
 SET(SUB4_SOURCES sub4.c)
-
+SET(SUB5_SOURCES sub5.c)
 
 # cflag
 SET(EXT_C_FLAGS "-m64 -pipe -Wall -fno-strict-aliasing -O3 -std=c99 -Wstrict-prototypes -Wmissing-prototypes -Dos_linux_gcc_x86 -DLITE=1 -DNDEBUG -D_GNU_SOURCE")
@@ -66,3 +65,6 @@ TARGET_LINK_LIBRARIES(${SUB3_NAME} LINK_PUBLIC ${DDS_LIB_DIR} rt pthread gen poo
 ADD_EXECUTABLE(${SUB4_NAME} ${SUB4_SOURCES})
 TARGET_LINK_LIBRARIES(${SUB4_NAME} LINK_PUBLIC ${DDS_LIB_DIR} rt pthread gen lftpool)
 
+# sub5
+ADD_EXECUTABLE(${SUB5_NAME} ${SUB5_SOURCES})
+TARGET_LINK_LIBRARIES(${SUB5_NAME} LINK_PUBLIC ${DDS_LIB_DIR} rt pthread gen pool)

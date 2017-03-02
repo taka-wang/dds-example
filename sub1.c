@@ -1,4 +1,4 @@
-//
+
 // subscriber with listener (async)
 //
 
@@ -13,8 +13,9 @@
 
 #define MY_TOPIC "Voltage"              // DDS topic name
 
-// global variables
-const uint16_t MAX_SAMPLES  = 1;        // max num of sample for each take
+enum { MAX_SAMPLES = 1 };               // max num of sample for each take
+
+// global variables       
 static volatile int do_loop = 1;
 
 // signal handler
