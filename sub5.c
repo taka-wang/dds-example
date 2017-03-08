@@ -34,9 +34,9 @@ typedef enum
 } reader_type;  
 
 // global variables
-static dds_condition_t terminated_cond;    // terminated condition variable
+static dds_condition_t terminated_cond;     // terminated condition variable
 
-extern void thread_task(void *arg);        // thread handler
+extern void thread_task(void *arg);         // thread handler
 
 // compound sample with sample pointer and sample info arrays
 typedef struct compound_sample_s 
@@ -51,7 +51,7 @@ typedef struct compound_sample_s
 // handle ctrl+c signal
 static void sigint_handler (int fdw_ctrl_type)
 {
-    dds_guard_trigger (terminated_cond); // set trigger_value
+    dds_guard_trigger (terminated_cond);    // set trigger_value
 }
 
 // thread handler
@@ -64,21 +64,30 @@ void thread_task(void *arg)
     Modbus_led*     sample_ptr2 = NULL;
 
     // give chance to catch terminate signal
-    for (int i = 0; !dds_condition_triggered (terminated_cond) AND i < compound_samples_ptr->sample_count; i++)
+    for (int i = 0; !dds_condition_triggered (terminated_cond) AND 
+                    (i < compound_samples_ptr->sample_count); i++)
     {
-        if (compound_samples_ptr->samples_info[i].valid_data) // verify sample from sample_info
+        // verify sample from sample_info
+        if (compound_samples_ptr->samples_info[i].valid_data)
         {
+            // get timestamp from sample info
+            printf("src ts: %" PRId64 ", rcv ts: %" PRId64 "\n", 
+                    compound_samples_ptr->samples_info[i].source_timestamp, 
+                    compound_samples_ptr->samples_info[i].reception_timestamp);
+
             switch (compound_samples_ptr->type)
             {
                 case voltage: 
-                    sample_ptr = compound_samples_ptr->samples_ptr[i]; // alternative: cast void* to Modbus_voltage*
+                    // alternative: cast void* to Modbus_voltage*
+                    sample_ptr = compound_samples_ptr->samples_ptr[i];
                     printf("read vol(%d): %d, %f\n", 
                         compound_samples_ptr->counter,
                         sample_ptr->id, 
                         sample_ptr->val);
                     break;
                 case led: 
-                    sample_ptr2 = compound_samples_ptr->samples_ptr[i]; // alternative: cast void* to Modbus_voltage*
+                    // alternative: cast void* to Modbus_voltage*
+                    sample_ptr2 = compound_samples_ptr->samples_ptr[i];
                     printf("read led(%d): %d, %d\n", 
                         compound_samples_ptr->counter,
                         sample_ptr2->id, 
